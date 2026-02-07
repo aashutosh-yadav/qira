@@ -1,3 +1,4 @@
+import os
 import struct
 
 IS_VALID = 0x80000000
@@ -22,20 +23,35 @@ def flag_to_type(flags):
     typ = "R"
   return typ
 
+def _open_log_handle(f):
+  if isinstance(f, (str, bytes, os.PathLike)):
+    return open(f, "rb"), True
+  return f, False
+
 def get_log_length(f):
   try:
-    f.seek(0)
-    dat = f.read(4)
-    return struct.unpack("I", dat)[0]
+    f, should_close = _open_log_handle(f)
+    try:
+      f.seek(0)
+      dat = f.read(4)
+      return struct.unpack("I", dat)[0]
+    finally:
+      if should_close:
+        f.close()
   except:
     return None
 
 def read_log(f, seek=1, cnt=0):
-  f.seek(seek*0x18)
-  if cnt == 0:
-    dat = f.read()
-  else:
-    dat = f.read(cnt * 0x18)
+  f, should_close = _open_log_handle(f)
+  try:
+    f.seek(seek*0x18)
+    if cnt == 0:
+      dat = f.read()
+    else:
+      dat = f.read(cnt * 0x18)
+  finally:
+    if should_close:
+      f.close()
 
   ret = []
   for i in range(0, len(dat), 0x18):
@@ -48,10 +64,9 @@ def read_log(f, seek=1, cnt=0):
 
 def write_log(fn, dat):
   # untested
-  ss = [struct.pack("I", len(dat)) + "\x00"*0x14]
+  ss = [struct.pack("I", len(dat)) + b"\x00"*0x14]
   for (address, data, clnum, flags) in dat:
     ss.append(struct.pack("QQII", address, data, clnum, flags))
   f = open(fn, "wb")
-  f.write(''.join(ss))
+  f.write(b"".join(ss))
   f.close()
-

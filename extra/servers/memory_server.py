@@ -1,6 +1,6 @@
 from qira_log import *
 from flask import Flask
-from flask.ext.socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit
 import base64
 
 class Address:
@@ -23,13 +23,13 @@ class Memory:
   def __init__(this):
     this.daddr = {}
   def fetch(this, clnum, addr, l):
-    ret = []
+    ret = bytearray()
     for i in range(addr, addr+l):
       if i in this.daddr:
-        ret.append(chr(this.daddr[i].fetch(clnum)))
+        ret.append(this.daddr[i].fetch(clnum) & 0xFF)
       else:
-        ret.append("\xAA")   # best canary value
-    return ''.join(ret)
+        ret.append(0xAA)   # best canary value
+    return bytes(ret)
   def commit(this, clnum, addr, dat):
     if addr not in this.daddr:
       this.daddr[addr] = Address()
@@ -44,7 +44,7 @@ def init():
     if flags & IS_WRITE and flags & IS_MEM:
       size = flags & SIZE_MASK
       # support big endian
-      for i in range(0, size/8):
+      for i in range(0, size//8):
         mem.commit(clnum, address+i, data & 0xFF)
         data >>= 8
     elif flags & IS_WRITE:
@@ -60,9 +60,9 @@ socketio = SocketIO(app)
 def event(m):
   if m['clnum'] == None or m['address'] == None or m['len'] == None:
     return
-  print "my event ",m
+  print("my event ",m)
   dat = mem.fetch(m['clnum'], m['address'], m['len'])
-  emit('memory', {'address': m['address'], 'raw': base64.b64encode(dat)})
+  emit('memory', {'address': m['address'], 'raw': base64.b64encode(dat).decode("ascii")})
 
 @socketio.on('getregisters')
 def regevent(m):
@@ -78,6 +78,5 @@ def regevent(m):
 
 if __name__ == '__main__':
   init()
-  print "init done"
+  print("init done")
   socketio.run(app, port=3002)
-

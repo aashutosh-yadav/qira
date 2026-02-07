@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
 from bap import bil
 from bap import adt
@@ -15,7 +15,7 @@ class Memory(dict):
 
   def get_mem(self, addr, size, little_endian=True):
     addr = int(addr)
-    result = "".join([self[address] for address in range(addr, addr+size)])
+    result = b"".join([self[address] for address in range(addr, addr+size)])
     if little_endian: result = result[::-1]
     return result
 
@@ -24,7 +24,7 @@ class Memory(dict):
       addr = int(addr)
       shift = i if little_endian else size-i-1
       byteval = (val >> shift*8) & 0xff
-      self[addr+i] = chr(byteval)
+      self[addr+i] = bytes([byteval])
 
   def __getitem__(self, addr):
     if addr not in self:
@@ -48,9 +48,9 @@ class State:
     if isinstance(name, str):
       return self.variables[name]
     elif isinstance(name, int):
-      return self.memory(name)
+      return self.memory[name]
     elif isinstance(name, ConcreteBitVector):
-      return self.memory(int(name))
+      return self.memory[int(name)]
 
   def __setitem__(self, name, val):
     if isinstance(name, str):
@@ -75,15 +75,15 @@ class ConcreteExecutor(adt.Visitor):
 
   def visit_Load(self, op):
     addr = self.run(op.idx)
-    mem = self.state.get_mem(addr, op.size / 8, isinstance(op.endian, bil.LittleEndian))
+    mem = self.state.get_mem(addr, op.size // 8, isinstance(op.endian, bil.LittleEndian))
     if len(mem) == 0:
       raise MemoryException(addr)
-    return ConcreteBitVector(op.size, int(mem.encode('hex'), 16))
+    return ConcreteBitVector(op.size, int.from_bytes(mem, byteorder="big"))
 
   def visit_Store(self, op):
     addr = self.run(op.idx)
     val = self.run(op.value)
-    self.state.set_mem(addr, op.size / 8, val, isinstance(op.endian, bil.LittleEndian))
+    self.state.set_mem(addr, op.size // 8, val, isinstance(op.endian, bil.LittleEndian))
     return op.mem
 
   def visit_Var(self, op):
@@ -248,7 +248,7 @@ def validate_bil(program, flow):
     cpu_flags = ["CF", "PF", "AF", "ZF", "SF", "OF", "DF"]
     PC = "RIP"
   else:
-    print "Architecture not supported"
+    print("Architecture not supported")
     return [],[]
 
 
@@ -261,8 +261,8 @@ def validate_bil(program, flow):
     varnames = registers + flags
     initial_regs = trace.db.fetch_registers(clnum)
     varvals = initial_regs + flagvalues
-    varvals = map(lambda x: ConcreteBitVector(regsize, x), varvals)
-    initial_vars = dict(zip(varnames, varvals))
+    varvals = [ConcreteBitVector(regsize, x) for x in varvals]
+    initial_vars = dict(list(zip(varnames, varvals)))
     initial_mem_get = partial(trace.fetch_raw_memory, clnum)
     return State(initial_vars, initial_mem_get)
 
@@ -310,13 +310,13 @@ def validate_bil(program, flow):
         error = False
         correct_regs = new_state_for_clnum(clnum, include_flags=False).variables
 
-        for reg, correct in correct_regs.iteritems():
+        for reg, correct in correct_regs.items():
           if state[reg] != correct:
             error = True
             errors.append(Error(clnum, instr, "%s was incorrect! (%x != %x)." % (reg, state[reg] , correct)))
             state[reg] = correct
 
-        for (addr, val) in state.memory.items():
+        for (addr, val) in list(state.memory.items()):
           realval = trace.fetch_raw_memory(clnum, addr, 1)
           if len(realval) == 0 or len(val) == 0:
             errors.append(Error(clnum, instr, "Used invalid address %x." % addr))
@@ -324,7 +324,7 @@ def validate_bil(program, flow):
             state = new_state_for_clnum(clnum)
           elif val != realval:
             error = True
-            errors.append(Error(clnum, instr, "Value at address %x is wrong! (%x != %x)." % (addr, ord(val), ord(realval))))
+            errors.append(Error(clnum, instr, "Value at address %x is wrong! (%x != %x)." % (addr, val[0], realval[0])))
             state[addr] = realval
 
   return (errors, warnings)

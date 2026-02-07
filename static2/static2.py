@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.7
-from __future__ import print_function
+#!/usr/bin/env python3
+
 
 # NO MORE RADARE
 # tags should be dynamically generated
@@ -113,8 +113,8 @@ class Static:
           continue
         ret[k] = d[k]
       return ret
-    kk = self.tags.keys()
-    vv = map(lambda x: blacklist(self.tags[x].backing), kk)
+    kk = list(self.tags.keys())
+    vv = [blacklist(self.tags[x].backing) for x in kk]
     return self.global_tags.backing, kk, vv
 
   def deserialize(self, dat):
@@ -153,7 +153,7 @@ class Static:
        the name of that address, if it exists
        doesn't make sense to be used externally...'''
     st = str(st)
-    m = map(lambda x:int(x,16),re.findall(r"(?<=0x)[0-9a-f]+",st))
+    m = [int(x,16) for x in re.findall(r"(?<=0x)[0-9a-f]+",st)]
     for val in m:
       if self[val]['name']:
         st = st.replace(hex(val),self[val]['name'])
@@ -171,7 +171,7 @@ class Static:
     ret = {}
     if addresses == None:
       # all the addresses
-      addresses = self.tags.keys()
+      addresses = list(self.tags.keys())
     for a in addresses:
       rret = {}
       for f in filt:
@@ -211,7 +211,7 @@ class Static:
       ri = address+i
 
       # hack for "RuntimeError: dictionary changed size during iteration"
-      for (ss, se) in self.base_memory.keys():
+      for (ss, se) in list(self.base_memory.keys()):
         if ss <= ri and ri < se:
           try:
             dat.append(self.base_memory[(ss,se)][ri-ss])

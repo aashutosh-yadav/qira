@@ -7,5 +7,5 @@ for i in range(40):
   b = random.randint(40, 192)
   c.append("#%02X%02X%02X" % (r,g,b))
 
-print c
+print(c)
 

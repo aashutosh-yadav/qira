@@ -25,6 +25,8 @@ See instructions on [qira.me](http://qira.me/) to install 1.3
 
 ## Installing trunk
 
+Requires Python 3.14+.
+
 <pre>
 cd ~/
 git clone https://github.com/geohot/qira.git
@@ -116,7 +118,7 @@ u -- make undefined at iaddr
 
 ## Installation on Windows (experimental)
 
-* Install git and python 2.7.9
+* Install git and Python 3.14+
 * Run install.bat
 
 
@@ -144,4 +146,3 @@ QIRA static has historically been such a trash heap it's gated behind -S. QIRA s
 User input and the actual traces of the program should drive creation of the static database. Don't try to recover all CFGs, only what ran.
 
 The basic idea of static is that it exists at change -1 and doesn't change ever. Each address has a set of tags, including things like name.
-

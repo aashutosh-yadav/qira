@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """
 I wanted MIPS support but I couldn't find a GCC with MIPS support in the
 standard Ubuntu repos.
@@ -185,16 +185,16 @@ def process_files(archs,files,args):
       if cmd == []:
         continue #failed to get command
       if args.print_only:
-        print(" ".join(cmd))
+        print((" ".join(cmd)))
       else:
-        print("{} [{}/{}] {}".format(green_plus,
-          progress,to_compile," ".join(cmd)))
+        print(("{} [{}/{}] {}".format(green_plus,
+          progress,to_compile," ".join(cmd))))
         #don't show warnings
         status = subprocess.call(cmd,stdout=FNULL,stderr=FNULL)
         if status != 0:
           any_failed = True
           fail_path = os.path.join(path,fn)
-          print("{} Compilation failed for {}.".format(fail_minus,fail_path))
+          print(("{} Compilation failed for {}.".format(fail_minus,fail_path)))
       progress += 1
   if any_failed:
     print("At least one test failed.")

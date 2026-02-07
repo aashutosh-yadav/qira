@@ -16,21 +16,21 @@ for (address, data, clnum, flags) in dat:
 
 pmaps = []
 
-print "instructions"
+print("instructions")
 for i in sorted(ins_addrs):
   pmaps.append({"address": i, "type": "instruction"})
 
-print "memory"
+print("memory")
 for i in sorted(mem_addrs):
   if i not in ins_addrs:
     pmaps.append({"address": i, "type": "memory"})
 
 
 coll = db.pmaps
-print "doing db insert"
+print("doing db insert")
 coll.drop()
 coll.insert(pmaps)
-print "db insert done, building indexes"
+print("db insert done, building indexes")
 coll.ensure_index("address")
-print "indexes built"
+print("indexes built")
 

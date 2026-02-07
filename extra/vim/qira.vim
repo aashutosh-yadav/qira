@@ -1,5 +1,5 @@
-if !has('python')
-  echo "vim must be compiled with +python"
+if !has('python3')
+  echo "vim must be compiled with +python3"
   finish
 endif
 
@@ -9,24 +9,21 @@ set cursorline
 
 function! UpdateQIRALine()
 
-python << EOF
+python3 << EOF
 
-from socketIO_client import SocketIO, BaseNamespace
+import socketio
 import vim
-
-class CdaNamespace(BaseNamespace):
-  pass
 
 fn = vim.current.window.buffer.name
 (row, col) = vim.current.window.cursor
 
-sio = SocketIO('localhost', 3002)
-cda_namespace = sio.define(CdaNamespace, '/cda')
-cda_namespace.emit('navigateline', fn, row)
+sio = socketio.Client()
+sio.connect('http://localhost:3002', namespaces=['/cda'])
+sio.emit('navigateline', fn, row, namespace='/cda')
+sio.disconnect()
 
 EOF
 
 endfunction
 
 autocmd CursorMoved * :call UpdateQIRALine()
-

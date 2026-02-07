@@ -20,7 +20,7 @@ conc = pgd.state.se.any_int
 log = []
 clnum = 0
 for x in pgd.actions:
-  print x
+  print(x)
 
   # wtf?
   try:
@@ -41,7 +41,7 @@ for x in pgd.actions:
   if x.type == "reg":
     rn = p.arch.register_names[address]
     if rn == "eip" and x.action == "write":
-      print rn, "INSTRUCTION",hex(data)
+      print(rn, "INSTRUCTION",hex(data))
       # new instruction
       log.append((data, 0, clnum, qira_log.IS_VALID | qira_log.IS_START))
       clnum += 1
@@ -56,7 +56,7 @@ for x in pgd.actions:
     flags |= qira_log.IS_WRITE
 
   le = (address, data, clnum, flags)
-  print le
+  print(le)
 
   log.append(le)
 

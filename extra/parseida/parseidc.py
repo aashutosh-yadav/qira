@@ -18,15 +18,13 @@ for ln in open(sys.argv[1]).read().split("\n"):
     tags[addr]['name'] = name
   
 tags = dict(tags)
-print tags
+print(tags)
 
 # upload the tags
 
-from socketIO_client import SocketIO, BaseNamespace
-class QiraNamespace(BaseNamespace):
-  pass
+import socketio
 
-sio = SocketIO('localhost', 3002)
-qira = sio.define(QiraNamespace, '/qira')
-qira.emit("settags", dict(tags))
-
+sio = socketio.Client()
+sio.connect("http://localhost:3002", namespaces=["/qira"])
+sio.emit("settags", dict(tags), namespace="/qira")
+sio.disconnect()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # modified from https://github.com/nelhage/ministrace by @nelhage
 
@@ -23,14 +23,14 @@ def process_define(syscalls, text):
   if text.startswith('SYSCALL_DEFINE('):
     m = re.search(r'^SYSCALL_DEFINE\(([^)]+)\)\(([^)]+)\)$', text)
     if not m:
-      print "Unable to parse:", text
+      print("Unable to parse:", text)
       return
     name, args = m.groups()
     types = [s.strip().rsplit(" ", 1)[0] for s in args.split(",")]
   else:
     m = re.search(r'SYSCALL_DEFINE(\d)\(([^,]+)\s*(?:,\s*([^)]+))?\)$', text)
     if not m:
-      print "Unable to parse:", text
+      print("Unable to parse:", text)
       return
     nargs, name, argstr = m.groups()
     if argstr is not None:
@@ -75,12 +75,12 @@ def parse_type(t):
 def write_output(syscalls_h, types, numbers):
   out = open(syscalls_h, 'w')
 
-  print >>out, "const int MAX_SYSCALL_NUM = %d;" % (max(numbers.keys()),)
-  print >>out, "struct syscall_entry syscalls[] = {"
+  print("const int MAX_SYSCALL_NUM = %d;" % (max(numbers.keys()),), file=out)
+  print("struct syscall_entry syscalls[] = {", file=out)
   #for num in sorted(numbers.keys()):
   for num in range(max(numbers.keys())):
     if num not in numbers:
-      print >>out, ' { "UNKNOWN_'+str(num)+'", 6, {ARG_UNKNOWN,ARG_UNKNOWN,ARG_UNKNOWN,ARG_UNKNOWN,ARG_UNKNOWN,ARG_UNKNOWN}},'
+      print(' { "UNKNOWN_'+str(num)+'", 6, {ARG_UNKNOWN,ARG_UNKNOWN,ARG_UNKNOWN,ARG_UNKNOWN,ARG_UNKNOWN,ARG_UNKNOWN}},', file=out)
       continue
     name = numbers[num]
     if name in types:
@@ -89,19 +89,19 @@ def write_output(syscalls_h, types, numbers):
       args = ["void*"] * 6
 
     #print >>out, "  [%d] = {" % (num,)
-    print >>out, "   {   // %d" % (num,)
-    print >>out, "  /*.name  =*/ \"%s\"," % (name,)
-    print >>out, "  /*.nargs =*/ %d," % (len(args,))
+    print("   {   // %d" % (num,), file=out)
+    print("  /*.name  =*/ \"%s\"," % (name,), file=out)
+    print("  /*.nargs =*/ %d," % (len(args,)), file=out)
     out.write(   "  /*.args  =*/ {")
     out.write(", ".join([parse_type(t) for t in args] + ["ARG_UNKNOWN"] * (6 - len(args))))
     out.write("}},\n");
 
-  print >>out, "};"
+  print("};", file=out)
   out.close()
 
 def main(args):
   if not args:
-    print >>sys.stderr, "Usage: %s /path/to/linux_src" % (sys.argv[0],)
+    print("Usage: %s /path/to/linux_src" % (sys.argv[0],), file=sys.stderr)
     return 1
   linux_dir = args[0]
   for (name, unistd_h) in [("32", "/usr/include/x86_64-linux-gnu/asm/unistd_32.h"), ("64", "/usr/include/x86_64-linux-gnu/asm/unistd_64.h")]:

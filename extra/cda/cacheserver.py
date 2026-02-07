@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 import os
 import sys
 import cgi
@@ -97,5 +97,5 @@ def display_file():
 def set_cache(cache):
   global object_cache, file_cache, xref_cache
   (object_cache, file_cache, xref_cache) = cache
-  print "CDA: read",len(file_cache),"files",len(object_cache),"objects",len(xref_cache),"xrefs"
+  print("CDA: read",len(file_cache),"files",len(object_cache),"objects",len(xref_cache),"xrefs")
 

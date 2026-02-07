@@ -44,5 +44,5 @@ def get_depth(fxns, clnum):
 
 if __name__ == "__main__":
   dat = read_log("/tmp/qira_log")
-  print do_function_analysis(dat)
+  print(do_function_analysis(dat))
 

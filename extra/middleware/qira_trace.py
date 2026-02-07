@@ -8,7 +8,7 @@ import time
 
 class Trace:
   def __init__(self, program, forknum):
-    self.logfile = open("/tmp/qira_logs/"+str(forknum))
+    self.logfile = open("/tmp/qira_logs/"+str(forknum), "rb")
 
     self.program = program
     self.program.traces[forknum] = self
@@ -49,7 +49,7 @@ class Trace:
       fn = ' '.join(ln[2:])
 
       try:
-        f = open(fn)
+        f = open(fn, "rb")
       except:
         continue
       f.seek(offset)
@@ -74,7 +74,7 @@ class Trace:
       log = qira_log.read_log(self.logfile, self.changes_committed, total_changes)
       sys.stdout.write("read..."); sys.stdout.flush()
       self.process(log)
-      print "done", self.maxclnum
+      print("done", self.maxclnum)
       self.changes_committed += total_changes
       return True
     return False
@@ -106,7 +106,7 @@ class Trace:
       if flags & qira_log.IS_WRITE and flags & qira_log.IS_MEM:
         size = flags & qira_log.SIZE_MASK
         # support big endian
-        for i in range(0, size/8):
+        for i in range(0, size//8):
           self.mem.commit(clnum, address+i, data & 0xFF)
           data >>= 8
       elif flags & qira_log.IS_WRITE:
@@ -123,5 +123,4 @@ class Trace:
         self.program.pmaps[page_base] = "instruction"
     # *** FOR LOOP END ***
     self.program.read_asm_file()
-
 

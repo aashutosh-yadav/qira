@@ -10,7 +10,7 @@ if [ "$1" == "distrib" ] ; then
 fi
 
 source venv/bin/activate
-nosetests -v -s
+pytest -v -s
 
 # integration test
 ./qira qira_tests/bin/loop &
@@ -24,4 +24,3 @@ sleep 2
 curl http://localhost:3002/ | grep "<title>qira</title>"
 
 echo "tests pass"
-

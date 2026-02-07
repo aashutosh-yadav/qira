@@ -1,8 +1,8 @@
-#!/usr/bin/env python2.7
-from __future__ import print_function
-import qira_config
-import qira_program
-import arch
+#!/usr/bin/env python3
+
+from . import qira_config
+from . import qira_program
+from . import arch
 import time
 import math
 import sys
@@ -10,10 +10,7 @@ import struct
 
 from PIL import Image
 import base64
-try:
-  from StringIO import StringIO
-except ImportError:
-  from io import BytesIO as StringIO
+from io import BytesIO
 
 sys.path.append(qira_config.BASEDIR+"/static2")
 import static2
@@ -314,9 +311,9 @@ def guess_calling_conv(program,readregs,readstack):
     return ('UNKNOWN',0) #we can't guess the ABI with 0 information
 
   regs = program.tregs[0]
-  readregs = list(map(lambda x: regs[x], readregs)) #convert read regs into strings
+  readregs = list([regs[x] for x in readregs]) #convert read regs into strings
 
-  for abi in filter(lambda x:x[0] != "_",static2.ABITYPE.__dict__):
+  for abi in [x for x in static2.ABITYPE.__dict__ if x[0] != "_"]:
     if abi == 'UNKNOWN':
       continue
 
@@ -366,11 +363,11 @@ def analyse_calls(trace):
       init_regs = set()
       uninit_regs = set()
       for cl in range(clnum+1,endclnum):
-        changes = filter(lambda x:x['type'] in "LS",trace.db.fetch_changes_by_clnum(cl, -1))
-        argchanges = list(filter(lambda x:argrange[0] <= x['address'] <= argrange[1], changes))
+        changes = [x for x in trace.db.fetch_changes_by_clnum(cl, -1) if x['type'] in "LS"]
+        argchanges = list([x for x in changes if argrange[0] <= x['address'] <= argrange[1]])
         if len(argchanges) > 0:
-          seen = max(max(map(lambda x:x['address'],argchanges)),seen)
-        rchanges = filter(lambda x:x['type'] in "RW",trace.db.fetch_changes_by_clnum(cl, -1))
+          seen = max(max([x['address'] for x in argchanges]),seen)
+        rchanges = [x for x in trace.db.fetch_changes_by_clnum(cl, -1) if x['type'] in "RW"]
         for rchange in rchanges:
           regnum = rchange['address']//rsize
           if rchange['type'] == 'W' and regnum < nregs:
@@ -491,7 +488,7 @@ def get_vtimeline_picture(trace, minclnum, maxclnum):
       if i/sampling < im_y:
         px[0, i/sampling] = (96, 32, 32)
 
-  buf = StringIO()
+  buf = BytesIO()
   im.save(buf, format='PNG')
 
   dat = b"data:image/png;base64,"+base64.b64encode(buf.getvalue())
@@ -528,9 +525,9 @@ def slice(trace, inclnum):
   def is_load(r):
     return r['type'] == "R" or r['type'] == "L"
   def get_stores(clnum):
-    return set(map(lambda x: x['address'], filter(is_store, trace.db.fetch_changes_by_clnum(clnum, 100))))
+    return set([x['address'] for x in list(filter(is_store, trace.db.fetch_changes_by_clnum(clnum, 100)))])
   def get_loads(clnum):
-    return set(map(lambda x: x['address'], filter(is_load, trace.db.fetch_changes_by_clnum(clnum, 100))))
+    return set([x['address'] for x in list(filter(is_load, trace.db.fetch_changes_by_clnum(clnum, 100)))])
 
   clnum = inclnum
   st = get_loads(clnum)
@@ -580,5 +577,4 @@ if __name__ == "__main__":
   #print analyze(t, program)
   #print blocks
   #draw_multigraph(blocks)
-
 

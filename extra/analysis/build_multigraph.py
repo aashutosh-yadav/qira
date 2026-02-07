@@ -4,10 +4,10 @@ import pydot
 
 dat = read_log("/tmp/qira_log")
 
-print "extracting blocks"
+print("extracting blocks")
 blocks = do_block_analysis(dat)
 
-print "generating traces"
+print("generating traces")
 
 arr = []
 trace = []
@@ -26,7 +26,7 @@ for i in range(len(blocks)):
 
 graph = pydot.Dot(graph_type='digraph')
 
-print "adding nodes"
+print("adding nodes")
 nodes = []
 for a in arr:
   n = pydot.Node(a, shape="box")
@@ -36,10 +36,10 @@ for a in arr:
 edges = []
 cnts = []
 
-print "trace size",len(trace)
-print "realblock count",len(arr)
+print("trace size",len(trace))
+print("realblock count",len(arr))
 
-print "counting edges"
+print("counting edges")
 for i in range(0, len(trace)-1):
   #e = pydot.Edge(nodes[trace[i]], nodes[trace[i+1]], label=str(cls[i+1]), headport="n", tailport="s")
   te = [nodes[trace[i]], nodes[trace[i+1]]]
@@ -50,9 +50,9 @@ for i in range(0, len(trace)-1):
     a = edges.index(te)
     cnts[a] += 1
 
-print "edge count",len(edges)
+print("edge count",len(edges))
 
-print "adding edges"
+print("adding edges")
 for i in range(len(edges)):
   te = edges[i]
   #print cnts[i]
@@ -62,7 +62,7 @@ for i in range(len(edges)):
     e = pydot.Edge(te[0], te[1], headport="n", tailport="s")
   graph.add_edge(e)
 
-print "drawing png"
+print("drawing png")
 graph.write_png('/tmp/graph.png')
   
 

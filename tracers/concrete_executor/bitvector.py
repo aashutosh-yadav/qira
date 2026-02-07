@@ -1,11 +1,9 @@
 import abc
 
-class BitVector(object):
-  __metaclass__ = abc.ABCMeta
-
+class BitVector(object, metaclass=abc.ABCMeta):
   """ Properties """
 
-  @abc.abstractproperty
+  @abc.abstractmethod
   def get_bits(self, low, high):
     return
 
@@ -19,7 +17,7 @@ class BitVector(object):
     assert num <= size, "Cannot get {} bits from {}-bit bitvector".format(num, size)
     return self.get_bits(0, num-1)
 
-  @abc.abstractproperty
+  @abc.abstractmethod
   def get_size(self):
     return
 
@@ -144,6 +142,10 @@ class BitVector(object):
   def __div__(self, other):
     return self.div(other)
   __rdiv__ = reverse(__div__)
+
+  def __truediv__(self, other):
+    return self.div(other)
+  __rtruediv__ = reverse(__truediv__)
 
   def __mod__(self, other):
     return self.mod(other)

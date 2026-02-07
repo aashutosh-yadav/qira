@@ -12,10 +12,10 @@ try:
   from elftools.elf.elffile import ELFFile
   has_elf_tools = 1
 except:
-  print "no elf tools found"
+  print("no elf tools found")
 
 if has_elf_tools:
-  elf = ELFFile(open(sys.argv[1]))
+  elf = ELFFile(open(sys.argv[1], "rb"))
   for section in elf.iter_sections():
     try:
       for symbol in section.iter_symbols():
@@ -38,7 +38,7 @@ if has_elf_tools:
             line = DIE.attributes['DW_AT_decl_line'].value
           except:
             pass
-          print lowpc, highpc, fil, line, src[line]
+          print(lowpc, highpc, fil, line, src[line])
           cdict[lowpc] = src[line]
 
 dat = open("/tmp/qira_disasm").read().split("\n")
@@ -51,18 +51,17 @@ for d in dat:
     if addr in sdict:
       d['name'] = sdict[addr]
     if addr in cdict:
-      print hex(addr)
+      print(hex(addr))
       d['comment'] = cdict[addr]
     ds.append(d)
 
 
 # DWARF data will go here too
 coll = db.program
-print "doing db insert"
+print("doing db insert")
 coll.drop()
 coll.insert(ds)
-print "db insert done, building indexes"
+print("db insert done, building indexes")
 coll.ensure_index("address")
-print "indexes built"
-
+print("indexes built")
 

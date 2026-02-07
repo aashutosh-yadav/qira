@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 import os
 import sys
 import cda_config
@@ -38,7 +38,7 @@ def parse_node(node, d, filename, care):
     usr = None
 
   if DEBUG == 1:
-    print "  "*d, node.kind, node.spelling, node.displayname, node.location, node.location.offset, node.extent.start.offset, node.extent.end.offset, usr
+    print("  "*d, node.kind, node.spelling, node.displayname, node.location, node.location.offset, node.extent.start.offset, node.extent.end.offset, usr)
 
   """
   if DEBUG == 1:
@@ -105,11 +105,11 @@ def parse_file(filename, args=[]):
   bad = False
   for m in tu.diagnostics:
     if m.severity >= 3:
-      print m
+      print(m)
       bad = True
   if bad == True:
     #raise Exception("parsing issue")
-    print "parsing issue"
+    print("parsing issue")
 
   # extract the things we care about
   care = []
@@ -124,11 +124,11 @@ def parse_file(filename, args=[]):
 def parse_files(files, args=[]):
   # for unbuilt clang
   for fn in files:
-    print "CDA: caching",fn
+    print("CDA: caching",fn)
     try:
       file_cache[fn] = parse_file(fn, args)
     except Exception as e:
-      print "CDA: error on",fn,":",e
+      print("CDA: error on",fn,":",e)
   dat = (object_cache, file_cache, xref_cache)
   return dat
 

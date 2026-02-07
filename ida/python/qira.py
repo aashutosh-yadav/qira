@@ -51,7 +51,7 @@ def jump_to(a):
 def ws_send(msg):
   global wsserver
   if (wsserver is not None) and (msg is not None):
-    for conn in wsserver.connections.itervalues():
+    for conn in wsserver.connections.values():
       conn.sendMessage(msg)
 
 def update_address(addr_type, addr):
@@ -183,7 +183,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
-import SocketServer
+import socketserver
 import hashlib
 import base64
 import socket
@@ -193,8 +193,8 @@ import time
 import sys
 import errno
 import logging
-from BaseHTTPServer import BaseHTTPRequestHandler
-from StringIO import StringIO
+from http.server import BaseHTTPRequestHandler
+from io import StringIO
 from select import select
 
 
@@ -247,9 +247,9 @@ class WebSocket(object):
     self.address = address
 
     self.handshaked = False
-    self.headerbuffer = ''
+    self.headerbuffer = b""
     self.readdraftkey = False
-    self.draftkey = ''
+    self.draftkey = b""
     self.headertoread = 2048
     self.hixie76 = False
 
@@ -278,8 +278,8 @@ class WebSocket(object):
     self.readdraftkey = False
     self.hixie76 = False
     self.headertoread = 2048
-    self.headerbuffer = ''
-    self.data = ''
+    self.headerbuffer = b""
+    self.data = b""
 
 
   def handleMessage(self):
@@ -306,6 +306,14 @@ class WebSocket(object):
 
     # data
     elif self.opcode == self.STREAM or self.opcode == self.TEXT or self.opcode == self.BINARY:
+      if isinstance(self.data, bytearray):
+        payload = bytes(self.data)
+      else:
+        payload = self.data if self.data is not None else b""
+      if self.opcode == self.TEXT:
+        self.data = payload.decode("utf-8", errors="replace")
+      else:
+        self.data = payload
       self.handleMessage()
 
 
@@ -335,12 +343,12 @@ class WebSocket(object):
             self.handshake_hixie76()
 
         # indicates end of HTTP header
-        elif '\r\n\r\n' in self.headerbuffer:
-          self.request = HTTPRequest(self.headerbuffer)
+        elif b'\r\n\r\n' in self.headerbuffer:
+          self.request = HTTPRequest(self.headerbuffer.decode("latin-1"))
           # hixie handshake
-          if self.request.headers.has_key('Sec-WebSocket-Key1'.lower()) and self.request.headers.has_key('Sec-WebSocket-Key2'.lower()):
+          if 'Sec-WebSocket-Key1'.lower() in self.request.headers and 'Sec-WebSocket-Key2'.lower() in self.request.headers:
             # check if we have the key in our buffer
-            index = self.headerbuffer.find('\r\n\r\n') + 4
+            index = self.headerbuffer.find(b'\r\n\r\n') + 4
             # determine how much of the 8 byte key we have
             read = len(self.headerbuffer) - index
             # do we have all the 8 bytes we need?
@@ -357,12 +365,13 @@ class WebSocket(object):
               self.handshake_hixie76()
 
           # handshake rfc 6455
-          elif self.request.headers.has_key('Sec-WebSocket-Key'.lower()):
+          elif 'Sec-WebSocket-Key'.lower() in self.request.headers:
             key = self.request.headers['Sec-WebSocket-Key'.lower()]
-            hStr = self.handshakeStr % { 'acceptstr' :  base64.b64encode(hashlib.sha1(key + self.GUIDStr).digest()) }
+            accept = base64.b64encode(hashlib.sha1((key + self.GUIDStr).encode("utf-8")).digest()).decode("ascii")
+            hStr = self.handshakeStr % { 'acceptstr' : accept }
             self.sendBuffer(hStr)
             self.handshaked = True
-            self.headerbuffer = ''
+            self.headerbuffer = b""
 
             try:
               self.handleConnected()
@@ -381,9 +390,9 @@ class WebSocket(object):
       if data:
         for val in data:
           if self.hixie76 is False:
-            self.parseMessage(ord(val))
+            self.parseMessage(val)
           else:
-            self.parseMessage_hixie76(ord(val))
+            self.parseMessage_hixie76(val)
       else:
         raise Exception("remote socket closed")
 
@@ -396,10 +405,10 @@ class WebSocket(object):
 
     spaces1 = k1.count(" ")
     spaces2 = k2.count(" ")
-    num1 = int("".join([c for c in k1 if c.isdigit()])) / spaces1
-    num2 = int("".join([c for c in k2 if c.isdigit()])) / spaces2
+    num1 = int("".join([c for c in k1 if c.isdigit()])) // spaces1
+    num2 = int("".join([c for c in k2 if c.isdigit()])) // spaces2
 
-    key = ''
+    key = b""
     key += struct.pack('>I', num1)
     key += struct.pack('>I', num2)
     key += self.draftkey
@@ -415,7 +424,7 @@ class WebSocket(object):
 
     self.handshaked = True
     self.hixie76 = True
-    self.headerbuffer = ''
+    self.headerbuffer = b""
 
     try:
       self.handleConnected()
@@ -434,6 +443,10 @@ class WebSocket(object):
       pass
 
   def sendBuffer(self, buff):
+    if isinstance(buff, str):
+      buff = buff.encode("utf-8")
+    elif isinstance(buff, bytearray):
+      buff = bytes(buff)
     size = len(buff)
     tosend = size
     index = 0
@@ -441,7 +454,7 @@ class WebSocket(object):
     while tosend > 0:
       try:
         # i should be able to send a bytearray
-        sent = self.client.send(str(buff[index:size]))
+        sent = self.client.send(buff[index:size])
         if sent == 0:
           raise RuntimeError("socket connection broken")
 
@@ -470,7 +483,8 @@ class WebSocket(object):
         header.append(0x82)
 
       b2 = 0
-      length = len(s)
+      payload = s.encode("utf-8") if isString else bytes(s)
+      length = len(payload)
 
       if length <= 125:
         b2 |= length
@@ -487,7 +501,7 @@ class WebSocket(object):
         header.extend(struct.pack("!Q", length))
 
       if length > 0:
-        self.sendBuffer(header + s)
+        self.sendBuffer(header + payload)
       else:
         self.sendBuffer(header)
       header = None
@@ -496,7 +510,10 @@ class WebSocket(object):
       msg = bytearray()
       msg.append(0)
       if len(s) > 0:
-        msg.extend(str(s).encode("UTF8"))
+        if isinstance(s, bytes):
+          msg.extend(s)
+        else:
+          msg.extend(str(s).encode("UTF8"))
       msg.append(0xFF)
 
       self.sendBuffer(msg)
@@ -583,7 +600,7 @@ class WebSocket(object):
         raise Exception('short length exceeded allowable size')
 
       if len(self.lengtharray) == 2:
-        self.length = struct.unpack_from('!H', str(self.lengtharray))[0]
+        self.length = struct.unpack_from('!H', bytes(self.lengtharray))[0]
 
         if self.hasmask is True:
           self.maskarray = bytearray()
@@ -611,7 +628,7 @@ class WebSocket(object):
         raise Exception('long length exceeded allowable size')
 
       if len(self.lengtharray) == 8:
-        self.length = struct.unpack_from('!Q', str(self.lengtharray))[0]
+        self.length = struct.unpack_from('!Q', bytes(self.lengtharray))[0]
 
         if self.hasmask is True:
           self.maskarray = bytearray()
@@ -696,7 +713,7 @@ class SimpleWebSocketServer(object):
   def close(self):
     self.serversocket.close()
 
-    for conn in self.connections.itervalues():
+    for conn in self.connections.values():
       try:
         conn.handleClose()
       except:
@@ -816,4 +833,3 @@ class QiraServer(WebSocket):
 
   def handleClose(self):
     idaapi.msg("[QIRA Plugin] WebSocket closed\n")
-

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
 from elftools.elf.relocation import RelocationSection
@@ -74,9 +74,9 @@ def load_binary(static):
         for section in elf.iter_sections():
           if section.name == ".plt":
             for name, addr in zip(plt_symbols,
-                     range(section['sh_addr'] + PLT_ENTRY_SIZE,
+                     list(range(section['sh_addr'] + PLT_ENTRY_SIZE,
                            section['sh_addr'] + PLT_ENTRY_SIZE + PLT_ENTRY_SIZE*len(plt_symbols),
-                           PLT_ENTRY_SIZE)):
+                           PLT_ENTRY_SIZE))):
               static[addr]['name'] = name
             #print plt_symbols, section['sh_addr']
 

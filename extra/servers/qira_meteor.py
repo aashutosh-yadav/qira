@@ -6,7 +6,7 @@ import json
 
 # communication through a file like this is bad
 def write_memdb(regs, mem):
-  open("/tmp/qira_memdb", "wb").write(
+  open("/tmp/qira_memdb", "w").write(
     json.dumps({"regs": regs.dump(), "mem": mem.dump()}))
 
 meteor_pid = -1
@@ -36,15 +36,15 @@ def mongo_connect():
 def meteor_init(is_managing_meteor):
   # connect to db, set up collections, and drop
   if is_managing_meteor:
-    print "restarting meteor"
+    print("restarting meteor")
     kill_meteor()
     start_meteor()
-  print "waiting for mongo connection"
+  print("waiting for mongo connection")
   db = mongo_connect()
   Change = db.change
   Change.drop()
   db.connection.close()
-  print "dropped old databases"
+  print("dropped old databases")
 
 def wait_for_port(port, closed=False):
   while 1:
@@ -66,26 +66,25 @@ def start_meteor():
     os.environ['PATH'] += ":"+os.getenv("HOME")+"/.meteor/tools/latest/bin/"
     os.execvp("mrt", ["mrt"])
   meteor_pid = ret
-  print "waiting for mongodb startup"
+  print("waiting for mongodb startup")
   wait_for_port(3000)
   wait_for_port(3001)
-  print "socket ports are open"
+  print("socket ports are open")
   time.sleep(5)
-  print "meteor started with pid",meteor_pid
+  print("meteor started with pid",meteor_pid)
 
 def kill_meteor():
   global meteor_pid
   if meteor_pid != -1:
-    print "killing meteor"
+    print("killing meteor")
     sys.stdout.flush()
     os.kill(meteor_pid, signal.SIGINT)
-    print os.waitpid(meteor_pid, 0)
-    print "meteor is dead"
+    print(os.waitpid(meteor_pid, 0))
+    print("meteor is dead")
     meteor_pid = -1
     
-    print "waiting for ports to be closed"
+    print("waiting for ports to be closed")
     wait_for_port(3000, True)
     os.system("killall mongod")   # OMG WHY DO I NEED THIS?
     wait_for_port(3001, True)
-    print "ports are closed"
-
+    print("ports are closed")

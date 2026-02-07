@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from capstone import *
 import capstone # for some unexported (yet) symbols in Capstone 3.0
 import qira_config
@@ -134,7 +134,7 @@ class BapInsn(object):
 
 def exists(cont,f):
   try:
-    r = (x for x in cont if f(x)).next()
+    r = next((x for x in cont if f(x)))
     return True
   except StopIteration:
     return False
@@ -310,7 +310,7 @@ class CsInsn(object):
     # so we need to decrement this for instructions like "ldr r3, [r3]". (see regmem.js)
     register_values = trace.db.fetch_registers(clnum-1)
     
-    return dict(zip(registers, register_values))
+    return dict(list(zip(registers, register_values)))
 
   def _get_operand_s(self, trace, clnum):
     """

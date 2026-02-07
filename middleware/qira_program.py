@@ -1,7 +1,7 @@
-from __future__ import print_function
-from qira_base import *
-import qira_config
-import qira_analysis
+
+from .qira_base import *
+from . import qira_config
+from . import qira_analysis
 
 import os
 import shutil
@@ -16,9 +16,9 @@ from subprocess import (Popen, PIPE)
 import json
 
 import struct
-import qiradb
+from . import qiradb
 
-import arch
+from . import arch
 
 # new home of static2
 sys.path.append(qira_config.BASEDIR+"/static2")
@@ -422,7 +422,8 @@ class Trace:
     threading.Thread(target=self.analysis_thread).start()
 
   def fetch_raw_memory(self, clnum, address, ln):
-    return ''.join(map(chr, self.fetch_memory(clnum, address, ln).values()))
+    mem = self.fetch_memory(clnum, address, ln)
+    return bytes(mem[i] for i in range(ln) if i in mem)
 
   # proxy the db call and fill in base memory
   def fetch_memory(self, clnum, address, ln):
@@ -435,10 +436,7 @@ class Trace:
         dat[i] = mem[i]&0xFF
       else:
         try:
-          if (sys.version_info > (3, 0)):
-            dat[i] = self.program.static.memory(ri, 1)[0]
-          else:
-            dat[i] = ord(self.program.static.memory(ri, 1)[0])
+          dat[i] = self.program.static.memory(ri, 1)[0]
         except IndexError:
           pass
     return dat
@@ -449,7 +447,7 @@ class Trace:
     except:
       return "no strace"
 
-    f = ''.join(filter(lambda x: ord(x) < 0x80, f))
+    f = ''.join([x for x in f if ord(x) < 0x80])
     ret = []
     files = {}
     for ff in f.split("\n"):
@@ -564,7 +562,7 @@ class Trace:
     images_dir = qira_config.TRACE_FILE_BASE+str(self.forknum)+"_images"
     if os.path.isdir(images_dir):
       try:
-        from urllib import unquote
+        from urllib.parse import unquote
         for image in os.listdir(images_dir):
           if os.path.isfile(images_dir+"/"+image):
             img_map[unquote(image)] = {0: images_dir+"/"+image}

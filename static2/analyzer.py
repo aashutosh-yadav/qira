@@ -1,5 +1,5 @@
 try:
-  import Queue
+  import queue
 except ImportError:
   import queue as Queue
 from model import Function, Block, DESTTYPE
@@ -51,7 +51,7 @@ def make_function_at(static, address, recurse = True):
     return d.dests()
 
   # recursive descent pass
-  pending = Queue.Queue()
+  pending = queue.Queue()
   done = set()
   pending.put(address)
   while not pending.empty():

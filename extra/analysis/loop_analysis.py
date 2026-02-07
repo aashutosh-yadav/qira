@@ -41,7 +41,7 @@ def do_loop_analysis(blocks):
           # remove the loop from the blocks
           bb = bb[0:i] + bb[i:i+j] + bb[i+j*loopcnt:]
           ab = ab[0:i] + ab[i:i+j] + ab[i+j*loopcnt:]
-          print loop
+          print(loop)
           loops.append(loop)
           did_update = True
           break

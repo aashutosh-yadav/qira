@@ -1,6 +1,6 @@
-#!/usr/bin/env python
-from urllib import urlopen
-syscalls_master = urlopen("http://www.opensource.apple.com/source/xnu/xnu-2782.10.72/bsd/kern/syscalls.master?txt").read()
+#!/usr/bin/env python3
+from urllib.request import urlopen
+syscalls_master = urlopen("http://www.opensource.apple.com/source/xnu/xnu-2782.10.72/bsd/kern/syscalls.master?txt").read().decode("utf-8", "replace")
 x = (i.strip().split(None, 3) for i in syscalls_master.splitlines() if i.strip() and i[0] not in '#;')
 x = ((i[0],i[3][i[3].index('{')+1:i[3].index('}')].strip()) for i in x if len(i) == 4)
 x = {int(k):v for k,v in x if v != 'int nosys(void);' and v != 'int enosys(void);'}
@@ -19,17 +19,20 @@ def typename(arg):
   t = max(arg.rfind(' '), arg.rfind('*'))
   return arg[:t+1].strip(), arg[t+1:].strip()
 
-def isstring((typ, nam)):
+def isstring(typ_nam):
+  (typ, nam) = typ_nam
   return typ.startswith('user_addr_t') or typ.endswith('char *') or typ.endswith('void *')
 
-def showdecimal((typ, nam)):
+def showdecimal(typ_nam):
+  (typ, nam) = typ_nam
   return 'flag' not in nam and '*' not in typ and 'addr' not in typ and ('int' in typ or 'size' in typ)
 
-def showtype((typ, nam)):
+def showtype(typ_nam):
+  (typ, nam) = typ_nam
   return 'struct' in typ or '_t *' in typ
 
 
-print '''#ifdef __cplusplus
+print('''#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -41,14 +44,14 @@ enum argtype {
 \tARG_UNKNOWN
 };
 
-const int MAX_SYSCALL_NUM = '''+str(max(x.iterkeys())+1)+''';
+const int MAX_SYSCALL_NUM = '''+str(max(x.keys())+1)+''';
 
 struct syscall_entry {
 \tconst char *name;
 \tint nargs;
 \tenum argtype args[SYSCALL_MAXARGS];
 } syscalls[] = {
-\t{.name = "syscall", .nargs = 1, .args = { ARG_INT, }},'''
+\t{.name = "syscall", .nargs = 1, .args = { ARG_INT, }},''')
 
 def argenumconsts(v):
   def gen(typnam):
@@ -57,16 +60,16 @@ def argenumconsts(v):
     if showdecimal(typnam):
       return 'ARG_INT'
     return 'ARG_UNKNOWN'
-  return map(gen, map(typename, args(v)))
+  return list(map(gen, list(map(typename, args(v)))))
 
-for i in range(1, max(x.iterkeys())+1):
+for i in range(1, max(x.keys())+1):
   if i in x:
-    print '\t{.name = "%s", .nargs = %d, .args = { %s}},' % (name(x[i]), len(args(x[i])), ', '.join(argenumconsts(x[i]))+', ')
+    print('\t{.name = "%s", .nargs = %d, .args = { %s}},' % (name(x[i]), len(args(x[i])), ', '.join(argenumconsts(x[i]))+', '))
   else:
-    print '\t{.name = "#'+str(i)+'", .nargs = 6, .args = { '+'ARG_UNKNOWN, '*6+'}},'
+    print('\t{.name = "#'+str(i)+'", .nargs = 6, .args = { '+'ARG_UNKNOWN, '*6+'}},')
 
-print '''};
+print('''};
 
 #ifdef __cplusplus
 }
-#endif'''
+#endif''')

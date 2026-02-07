@@ -1,21 +1,24 @@
 # rewrite this whole thing in c?
 # we also have to move the pydb
-import blist
+import bisect
 
 class Address:
   def __init__(this):
-    this.backing = blist.sorteddict()
+    this.backing = {}
+    this._keys = []
 
   def fetch(this, clnum):
-    kclnum = this.backing.keys().bisect_right(clnum)
+    kclnum = bisect.bisect_right(this._keys, clnum)
     if kclnum == 0:
       return None
     else:
-      rclnum = this.backing.keys()[kclnum-1]
+      rclnum = this._keys[kclnum-1]
       #print this.backing.keys(), clnum, rclnum
       return this.backing[rclnum]
 
   def commit(this, clnum, dat):
+    if clnum not in this.backing:
+      bisect.insort(this._keys, clnum)
     this.backing[clnum] = dat
 
 class Memory:
@@ -40,7 +43,7 @@ class Memory:
       # slow
       for (s, e) in this.backing:
         if s <= i and i < e:
-          ret[i] = ord(this.backing[(s,e)][i-s])
+          ret[i] = this.backing[(s,e)][i-s]
     return ret
 
   # backing commit
@@ -60,4 +63,3 @@ class Memory:
     if addr not in this.daddr:
       this.daddr[addr] = Address()
     this.daddr[addr].commit(clnum, dat)
-

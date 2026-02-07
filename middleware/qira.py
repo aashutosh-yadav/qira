@@ -1,18 +1,18 @@
-#!/usr/bin/env python2.7
-from __future__ import print_function
+#!/usr/bin/env python3
+
 import os
 import sys
 basedir = os.path.dirname(os.path.realpath(__file__))
 import argparse
-import ipaddr
+import ipaddress
 import socket
 import threading
 import time
 
-import qira_config
-import qira_socat
-import qira_program
-import qira_webserver
+from . import qira_config
+from . import qira_socat
+from . import qira_program
+from . import qira_webserver
 
 if __name__ == '__main__':
   # define arguments
@@ -47,7 +47,7 @@ if __name__ == '__main__':
   if args.socat_port < 1 or args.socat_port > 65534:
     raise Exception("--socat-port must be a valid port number (1-65534)")
   try:
-    args.host = ipaddr.IPAddress(args.host).exploded
+    args.host = ipaddress.ip_address(args.host).exploded
   except ValueError:
     raise Exception("--web-host must be a valid IPv4/IPv6 address")
 
@@ -104,4 +104,3 @@ if __name__ == '__main__':
   if not is_qira_running:
     # start the http server
     qira_webserver.run_server(args, program)
-

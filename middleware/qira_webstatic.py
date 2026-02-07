@@ -1,19 +1,19 @@
 # eventually, this can live in a different process
 # or we can break the boundary at static2
 # these calls don't have to be included for qira to work
-from __future__ import print_function
+
 
 import sys
-import qira_config
+from . import qira_config
 
-from qira_webserver import socketio
-from qira_webserver import socket_method
-from qira_webserver import app
+from .qira_webserver import socketio
+from .qira_webserver import socket_method
+from .qira_webserver import app
 
 from flask import Flask, Response, redirect, request
 from flask_socketio import SocketIO, emit
 
-from qira_base import *
+from .qira_base import *
 import json
 import os
 
@@ -26,7 +26,7 @@ def init(lprogram):
 @socketio.on('getnames', namespace='/qira')
 @socket_method
 def getnames(addrs):
-  ret = program.static.get_tags(['name'], map(fhex, addrs))
+  ret = program.static.get_tags(['name'], list(map(fhex, addrs)))
   send = {}
   for addr in ret:
     send[ghex(addr)] = ret[addr]['name']
@@ -111,7 +111,7 @@ if qira_config.WITH_STATIC:
       if (sys.version_info > (3, 0)):
         return list(map(int, dat))
       else:
-        return map(ord, dat)
+        return list(map(ord, dat))
 
     fxn = program.static[fhex(haddr)]['function']
     if fxn == None or flat == True:
@@ -167,7 +167,7 @@ if qira_config.WITH_STATIC:
         for i in sorted(b.addresses):
           bbb = {'address': ghex(i)}
           copy_fields(bbb, program.static[i])
-          bbb['dests'] = list(map(lambda x: (ghex(x[0]), x[1]), program.static[i]['instruction'].dests()))
+          bbb['dests'] = list([(ghex(x[0]), x[1]) for x in program.static[i]['instruction'].dests()])
           bb.append(bbb)
         blocks.append(bb)
 

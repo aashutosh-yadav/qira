@@ -1,7 +1,7 @@
-from __future__ import print_function
-from qira_base import *
+
+from .qira_base import *
 import traceback
-import qira_config
+from . import qira_config
 import os
 import sys
 import time
@@ -32,11 +32,11 @@ def socket_method(func):
       print("ERROR",e,"in",func.__name__,"with",args)
   return func_wrapper
 
-import qira_socat
+from . import qira_socat
 import time
 
-import qira_analysis
-import qira_log
+from . import qira_analysis
+from . import qira_log
 
 LIMIT = 0
 
@@ -199,12 +199,12 @@ def getchanges(forknum, address, typ, cview, cscale, clnum):
   address = fhex(address)
 
   if forknum == -1:
-    forknums = program.traces.keys()
+    forknums = list(program.traces.keys())
   else:
     forknums = [forknum]
   ret = {}
   for forknum in forknums:
-    db = program.traces[forknum].db.fetch_clnums_by_address_and_type(address, chr(ord(typ[0])), cview[0], cview[1], LIMIT)
+    db = program.traces[forknum].db.fetch_clnums_by_address_and_type(address, typ[0], cview[0], cview[1], LIMIT)
     # send the clnum and the bunch closest on each side
     if len(db) > 50:
       send = set()
@@ -425,7 +425,7 @@ def run_server(largs, lprogram):
   program = lprogram
 
   # web static moved to external file
-  import qira_webstatic
+  from . import qira_webstatic
   qira_webstatic.init(lprogram)
 
   print("****** starting WEB SERVER on %s:%d" % (qira_config.HOST, qira_config.WEB_PORT))
@@ -435,4 +435,3 @@ def run_server(largs, lprogram):
   except KeyboardInterrupt:
     print("*** User raised KeyboardInterrupt")
     exit()
-

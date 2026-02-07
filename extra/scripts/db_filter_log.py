@@ -6,10 +6,10 @@ def is_library_address(address):
 
 db = MongoClient('localhost', 3001).meteor
 
-print "reading log"
+print("reading log")
 dat = read_log("/tmp/qira_log")
 
-print "filtering data"
+print("filtering data")
 ds = []
 dds = []
 
@@ -31,7 +31,7 @@ for (address, data, clnum, flags) in dat:
     continue
   ds.append((address, data, fixclnum, flags))
 
-print "filtered from %d(%d) to %d(%d)" % (maxclnum, len(dat), clnum, len(ds))
+print("filtered from %d(%d) to %d(%d)" % (maxclnum, len(dat), clnum, len(ds)))
 write_log("/tmp/qira_log", dds)
 write_log("/tmp/qira_log_filtered", ds)
 

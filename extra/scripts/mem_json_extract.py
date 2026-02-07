@@ -11,7 +11,7 @@ def init():
     if flags & IS_WRITE and flags & IS_MEM:
       size = flags & SIZE_MASK
       # support big endian
-      for i in range(0, size/8):
+      for i in range(0, size//8):
         mem.commit(clnum, address+i, data & 0xFF)
         data >>= 8
     elif flags & IS_WRITE:
@@ -21,8 +21,7 @@ def init():
 
 if __name__ == '__main__':
   init()
-  print "init done"
+  print("init done")
   dat = {"regs": regs.dump(), "mem": mem.dump()}
-  open("/tmp/qira_memdb", "wb").write(json.dumps(dat))
-  print "json extracted"
-
+  open("/tmp/qira_memdb", "w").write(json.dumps(dat))
+  print("json extracted")

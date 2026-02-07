@@ -1,9 +1,9 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 from qira_base import *
 import qira_config
 from qira_webserver import socket_method, socketio, app
 from flask import request
-from flask.ext.socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit
 import os
 import sys
 import json
@@ -46,7 +46,7 @@ def get_static_bytes(addr, llen, numlist=False):
   try:
     ret = elf_dat[addr-load_addr:addr-load_addr+program.tags[addr]['len']]
     if numlist:
-      return map(ord, list(ret))
+      return list(ret)
     else:
       return ret
   except:
@@ -98,7 +98,7 @@ def settags(tags):
         elif i == 'comment':
           ida.set_comment(naddr, tags[addr][i])
       program.tags[naddr][i] = tags[addr][i]
-      print hex(naddr), i, program.tags[naddr][i]
+      print(hex(naddr), i, program.tags[naddr][i])
 
 """
 @socketio.on('getstaticview', namespace='/qira')
@@ -187,13 +187,13 @@ def getstaticview(haddr, flat, flatrange):
 @app.route('/dot', methods=["POST"])
 def graph_dot():
   req = request.data
-  print "DOT REQUEST", req
+  print("DOT REQUEST", req)
   f = open("/tmp/in.dot", "w")
   f.write(req)
   f.close()
   os.system("dot /tmp/in.dot > /tmp/out.dot")
   ret = open("/tmp/out.dot").read()
-  print "DOT RESPONSE", ret
+  print("DOT RESPONSE", ret)
   return ret
 
 
@@ -207,10 +207,10 @@ def init_radare(path):
   core = RCore()
   desc = core.io.open(path, 0, 0)
   if desc == None:
-    print "*** RBIN LOAD FAILED"
+    print("*** RBIN LOAD FAILED")
     return False
   core.bin.load(path, 0, 0, 0, desc.fd, False)
-  print "*** radare bin loaded @",ghex(core.bin.get_baddr())
+  print("*** radare bin loaded @",ghex(core.bin.get_baddr()))
 
   """
   for e in core.bin.get_entries():
@@ -239,11 +239,11 @@ def init_radare(path):
   tags = collections.defaultdict(dict)
 
   for s in core.bin.get_symbols():
-    print ghex(s.vaddr), s.name
+    print(ghex(s.vaddr), s.name)
     tags[s.vaddr]['name'] = s.name
 
   for f in core.anal.get_fcns():
-    print f.name, ghex(f.addr), f.size
+    print(f.name, ghex(f.addr), f.size)
 
     tags[f.addr]['funclength'] = f.size
 
@@ -291,7 +291,7 @@ def init_radare(path):
 
       tags[sa]['instruction'] = instr
 
-      print "   ", ghex(sa), op.type & 0xFFFF, instr
+      print("   ", ghex(sa), op.type & 0xFFFF, instr)
 
       if op.size <= 0:
         break
@@ -319,7 +319,7 @@ def init_static(lprogram):
   if qira_config.WITH_IDA:
     ida.init_with_binary(program.program)
     tags = ida.fetch_tags()
-    print "*** ida returned %d tags" % (len(tags))
+    print("*** ida returned %d tags" % (len(tags)))
   elif qira_config.WITH_RADARE:
     tags = init_radare(program.program)
 
@@ -336,7 +336,7 @@ def init_static(lprogram):
   load_addr = 0x8048000
 
   # generate the static data for the instruction
-  print "** running static"
+  print("** running static")
   for addr in program.tags:
     if 'flags' in program.tags[addr] and program.tags[addr]['flags']&0x600 == 0x600:
       # the question here is where do we get the instruction bytes?
@@ -349,8 +349,7 @@ def init_static(lprogram):
 
       # BAP IS BALLS SLOW
       #self.tags[addr]['bap'] = self.genbap(raw, addr)
-  print "** static done"
+  print("** static done")
 
 if __name__ == "__main__":
   init_radare(sys.argv[1])
-

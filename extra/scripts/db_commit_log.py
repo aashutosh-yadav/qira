@@ -4,11 +4,11 @@ from pymongo import MongoClient
 db = MongoClient('localhost', 3001).meteor
 #db = MongoClient('localhost', 27017).meteor
 
-print "reading log"
+print("reading log")
 dat = read_log("/tmp/qira_log")
 #dat = read_log("/tmp/qira_log_filtered")
 
-print "building database data"
+print("building database data")
 
 ds = []
 
@@ -30,7 +30,7 @@ for (address, data, clnum, flags) in dat:
 
 #coll = db.tinychange
 coll = db.change
-print "doing db insert of",len(ds),"changes"
+print("doing db insert of",len(ds),"changes")
 coll.drop()
 coll.insert(ds)
 #print "db insert done, building indexes"
@@ -40,5 +40,5 @@ coll.insert(ds)
 #coll.ensure_index("clnum")
 #coll.ensure_index([("address", 1), ("type", 1)])
 #print "indexes built"
-print "db insert done"
+print("db insert done")
 

@@ -1,1 +1,1 @@
-C:\Python27\python.exe middleware/qira.py %*
+py -3 middleware/qira.py %*
